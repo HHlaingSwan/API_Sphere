@@ -74,9 +74,9 @@ export default function Navbar() {
           </Link>
           <Link
             href="/docs"
-            className="relative group overflow-hidden rounded-full p-[1px] focus:outline-none"
+            className="relative group overflow-hidden rounded-full p-px focus:outline-none"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-violet-500 to-cyan-500 rounded-full" />
+            <span className="absolute inset-0 bg-linear-to-r from-violet-500 to-cyan-500 rounded-full" />
             <div className="relative px-5 py-1.5 bg-background text-foreground text-xs font-semibold rounded-full group-hover:bg-transparent group-hover:text-white transition-colors duration-300">
               Start Reading
             </div>
@@ -135,7 +135,7 @@ export default function Navbar() {
               <Link
                 href="/docs"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-violet-500/20"
+                className="rounded-full bg-linear-to-r from-violet-600 to-cyan-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-violet-500/20"
               >
                 Get Started
               </Link>
