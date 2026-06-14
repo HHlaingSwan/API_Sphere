@@ -352,8 +352,14 @@ export default function Home() {
             </span>
           </div>
           <p>
-            © {new Date().getFullYear()} APISphere. All rights reserved. Built
-            with Next.js & Tailwind CSS.
+            ©{" "}
+            <Link
+              href="/questions"
+              className="hover:text-foreground transition-colors cursor-default"
+            >
+              {new Date().getFullYear()}
+            </Link>{" "}
+            APISphere. All rights reserved. Built with Next.js & Tailwind CSS.
           </p>
           <div className="flex gap-4">
             <Link

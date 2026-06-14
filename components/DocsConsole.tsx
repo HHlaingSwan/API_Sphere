@@ -105,7 +105,7 @@ export default function DocsConsole({ doc }: DocsConsoleProps) {
         <button
           onClick={handleExecuteConsole}
           disabled={isConsoleExecuting}
-          className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+          className="self-end px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
         >
           <Play className="h-3 w-3 fill-white" />
           <span>{isConsoleExecuting ? "Sending Packet..." : "Execute Call"}</span>
@@ -116,7 +116,7 @@ export default function DocsConsole({ doc }: DocsConsoleProps) {
       <div className="border-t border-border pt-4">
         <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-2">Response Log</span>
 
-        <div className="rounded-xl border border-border bg-background overflow-hidden font-mono text-[11px] h-56 flex flex-col">
+        <div className="rounded-xl border border-border bg-background overflow-hidden font-mono text-[11px] min-h-72 flex flex-col overflow-y-auto">
           {isConsoleExecuting ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground italic bg-background/50">
               <div className="h-4 w-4 border-2 border-t-transparent border-violet-500 rounded-full animate-spin" />
@@ -135,13 +135,13 @@ export default function DocsConsole({ doc }: DocsConsoleProps) {
                 <span className="text-muted-foreground">JSON</span>
               </div>
               {/* Headers List */}
-              <div className="px-3 py-1.5 border-b border-border text-[9px] text-muted-foreground max-h-16 overflow-y-auto">
+              <div className="px-3 py-1.5 border-b border-border text-[9px] text-muted-foreground max-h-24 overflow-y-auto">
                 {Object.entries(consoleResponse.headers).map(([k, v]) => (
                   <div key={k}>{k}: {v}</div>
                 ))}
               </div>
               {/* Response Body */}
-              <pre className="flex-1 p-3 overflow-y-auto bg-background text-emerald-300 leading-relaxed max-h-36 select-all">
+              <pre className="flex-1 p-3 overflow-y-auto bg-background text-emerald-300 leading-relaxed select-all">
                 <code>{JSON.stringify(consoleResponse.body, null, 2)}</code>
               </pre>
             </div>

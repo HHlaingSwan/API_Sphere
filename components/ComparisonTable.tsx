@@ -56,15 +56,6 @@ const protocols: ProtocolDetail[] = [
     latency: "High",
   },
   {
-    name: "tRPC",
-    category: "RPC",
-    transport: "HTTP/1.1, HTTP/2",
-    serialization: "JSON",
-    bidirectional: false,
-    useCase: "Type-safe Next.js/React fullstack monorepos",
-    latency: "Medium",
-  },
-  {
     name: "Webhooks",
     category: "Push / Event-Driven",
     transport: "HTTP POST",
@@ -72,15 +63,6 @@ const protocols: ProtocolDetail[] = [
     bidirectional: false,
     useCase: "Payment confirmations (Stripe), CI/CD build notifications",
     latency: "Medium",
-  },
-  {
-    name: "SSE (Server-Sent Events)",
-    category: "Push / Event-Driven",
-    transport: "HTTP/1.1, HTTP/2",
-    serialization: "Text (UTF-8)",
-    bidirectional: false,
-    useCase: "AI text streaming (LLMs), live news feeds, price updates",
-    latency: "Low",
   },
   {
     name: "WebSockets",
@@ -98,15 +80,6 @@ const protocols: ProtocolDetail[] = [
     serialization: "Binary (SCTP)",
     bidirectional: true,
     useCase: "Direct audio/video calls, P2P high-speed file sharing",
-    latency: "Ultra-Low",
-  },
-  {
-    name: "WebTransport",
-    category: "Real-time & Bidirectional",
-    transport: "HTTP/3 (QUIC)",
-    serialization: "Binary, Custom",
-    bidirectional: true,
-    useCase: "High-frequency gaming feeds, low-latency media streams",
     latency: "Ultra-Low",
   },
   {

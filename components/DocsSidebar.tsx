@@ -20,7 +20,7 @@ export default function DocsSidebar({
   return (
     <aside
       className={cn(
-        "w-full md:w-1/4 shrink-0 overflow-y-auto z-30 transition-all",
+        "w-full md:w-60 shrink-0 overflow-y-auto z-30 transition-all",
         "fixed  top-16 bg-background px-6 py-6 md:relative md:inset-auto md:top-auto md:h-full md:px-0 md:py-8 md:bg-transparent md:block",
         isOpen ? "block" : "hidden",
       )}
