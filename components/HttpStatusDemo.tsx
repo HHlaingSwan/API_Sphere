@@ -1,77 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, memo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Terminal, Send, Loader2, Hash, Info } from "lucide-react";
+import { Terminal, Loader2, Hash, Copy, Check, Trash2 } from "lucide-react";
 
 interface StatusCodeItem {
   code: number;
   name: string;
   category: string;
-  color: string;
 }
 
 const STATUS_CODES: StatusCodeItem[] = [
-  {
-    code: 200,
-    name: "OK",
-    category: "2xx Success",
-    color: "text-green-accent border-green-500/30",
-  },
-  {
-    code: 201,
-    name: "Created",
-    category: "2xx Success",
-    color: "text-green-accent border-green-500/30",
-  },
-  {
-    code: 304,
-    name: "Not Modified",
-    category: "3xx Redirection",
-    color: "text-blue-400 border-blue-500/30",
-  },
-  {
-    code: 400,
-    name: "Bad Request",
-    category: "4xx Client Error",
-    color: "text-amber-400 border-amber-500/30",
-  },
-  {
-    code: 401,
-    name: "Unauthorized",
-    category: "4xx Client Error",
-    color: "text-amber-400 border-amber-500/30",
-  },
-  {
-    code: 403,
-    name: "Forbidden",
-    category: "4xx Client Error",
-    color: "text-amber-400 border-amber-500/30",
-  },
-  {
-    code: 404,
-    name: "Not Found",
-    category: "4xx Client Error",
-    color: "text-amber-400 border-amber-500/30",
-  },
-  {
-    code: 405,
-    name: "Method Not Allowed",
-    category: "4xx Client Error",
-    color: "text-red-400 border-red-500/30",
-  },
-  {
-    code: 429,
-    name: "Too Many Requests",
-    category: "4xx Client Error",
-    color: "text-red-400 border-red-500/30",
-  },
-  {
-    code: 500,
-    name: "Internal Server Error",
-    category: "5xx Server Error",
-    color: "text-red-500 border-red-500/30",
-  },
+  { code: 200, name: "OK", category: "2xx Success" },
+  { code: 201, name: "Created", category: "2xx Success" },
+  { code: 304, name: "Not Modified", category: "3xx Redirection" },
+  { code: 400, name: "Bad Request", category: "4xx Client Error" },
+  { code: 401, name: "Unauthorized", category: "4xx Client Error" },
+  { code: 403, name: "Forbidden", category: "4xx Client Error" },
+  { code: 404, name: "Not Found", category: "4xx Client Error" },
+  { code: 405, name: "Method Not Allowed", category: "4xx Client Error" },
+  { code: 429, name: "Too Many Requests", category: "4xx Client Error" },
+  { code: 500, name: "Internal Server Error", category: "5xx Server Error" },
 ];
 
 const CATEGORIES = [
@@ -81,15 +30,16 @@ const CATEGORIES = [
   "5xx Server Error",
 ] as const;
 
-function statusColor(status: number): string {
-  if (status >= 200 && status < 300) return "bg-green-500";
-  if (status >= 300 && status < 400) return "bg-blue-500";
-  if (status >= 400 && status < 500) return "bg-amber-500";
-  if (status >= 500) return "bg-red-500";
-  return "bg-muted-foreground";
-}
+const categoryDotColor: Record<string, string> = {
+  "2xx Success": "bg-green-500",
+  "3xx Redirection": "bg-blue-500",
+  "4xx Client Error": "bg-amber-500",
+  "5xx Server Error": "bg-red-500",
+};
 
-function statusBgClass(status: number): string {
+type Tab = "headers" | "body" | "raw";
+
+function statusBadgeColor(status: number): string {
   if (status >= 200 && status < 300)
     return "bg-green-500/10 border-green-500/30 text-green-400";
   if (status >= 300 && status < 400)
@@ -100,24 +50,135 @@ function statusBgClass(status: number): string {
   return "bg-muted/40 border-border text-muted-foreground";
 }
 
+function statusDotColor(status: number): string {
+  if (status >= 200 && status < 300) return "bg-green-500";
+  if (status >= 300 && status < 400) return "bg-blue-500";
+  if (status >= 400 && status < 500) return "bg-amber-500";
+  if (status >= 500) return "bg-red-500";
+  return "bg-muted-foreground";
+}
+
+const TerminalHeader = ({
+  title,
+  extra,
+  showDots = true,
+}: {
+  title: string;
+  extra?: React.ReactNode;
+  showDots?: boolean;
+}) => (
+  <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/60 select-none shrink-0">
+    {showDots && (
+      <>
+        <span className="h-3 w-3 rounded-full bg-red-500/80" />
+        <span className="h-3 w-3 rounded-full bg-amber-500/80" />
+        <span className="h-3 w-3 rounded-full bg-green-500/80" />
+      </>
+    )}
+    <span
+      className={`${showDots ? "ml-2" : ""} text-xs font-semibold text-muted-foreground flex items-center gap-1.5`}
+    >
+      <Terminal className="h-3.5 w-3.5" />
+      {title}
+    </span>
+    {extra && <span className="ml-auto">{extra}</span>}
+  </div>
+);
+
+const StatusButton = memo(function StatusButton({
+  code,
+  name,
+  isSelected,
+  disabled,
+  onClick,
+}: {
+  code: number;
+  name: string;
+  isSelected: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const item = STATUS_CODES.find((s) => s.code === code);
+  const dotColor = item
+    ? categoryDotColor[item.category]
+    : "bg-muted-foreground";
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono font-bold border transition-all cursor-pointer ${
+        isSelected
+          ? "bg-primary/10 border-primary/40 text-primary shadow-sm"
+          : "bg-muted/20 border-border text-foreground hover:bg-muted/40"
+      } disabled:opacity-50 disabled:cursor-not-allowed`}
+    >
+      <span
+        className={`h-2 w-2 rounded-full shrink-0 ${isSelected ? "bg-primary" : dotColor}`}
+      />
+      <span>{code}</span>
+      <span
+        className={`text-[10px] font-medium ${isSelected ? "text-primary/70" : "text-muted-foreground"}`}
+      >
+        {name}
+      </span>
+    </button>
+  );
+});
+
 export default function HttpStatusDemo() {
   const [selected, setSelected] = useState(200);
+  const [activeTab, setActiveTab] = useState<Tab>("body");
+  const [copied, setCopied] = useState(false);
   const [result, setResult] = useState<{
     status: number;
-    headers: string;
+    statusText: string;
+    headers: Record<string, string>;
     body: string;
+    responseTime: number;
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const callEndpoint = async (code: number) => {
+  const groupedCodes = useMemo(() => {
+    return CATEGORIES.map((cat) => ({
+      category: cat,
+      codes: STATUS_CODES.filter((c) => c.category === cat),
+    })).filter((g) => g.codes.length > 0);
+  }, []);
+
+  const rawResponse = useMemo(() => {
+    if (!result) return "";
+    const headerLines = Object.entries(result.headers)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n");
+    return `HTTP/1.1 ${result.status} ${result.statusText}\n${headerLines ? "\n" + headerLines : ""}\n\n${result.body}`;
+  }, [result]);
+
+  const currentTabContent = useMemo(() => {
+    if (!result) return "";
+    if (activeTab === "headers") {
+      return (
+        Object.entries(result.headers)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join("\n") || "(No custom headers)"
+      );
+    }
+    if (activeTab === "body") return result.body;
+    return rawResponse;
+  }, [result, activeTab, rawResponse]);
+
+  const callEndpoint = useCallback(async (code: number) => {
     setSelected(code);
     setLoading(true);
     setResult(null);
 
+    const start = performance.now();
     try {
       const res = await fetch(`/api/status-codes/${code}`);
+      const elapsed = Math.round(performance.now() - start);
       const body = await res.json();
-      const headerLines: string[] = [];
+
+      const headers: Record<string, string> = {};
       res.headers.forEach((val, key) => {
         if (
           ![
@@ -130,163 +191,207 @@ export default function HttpStatusDemo() {
             "keep-alive",
           ].includes(key)
         ) {
-          headerLines.push(`${key}: ${val}`);
+          headers[key] = val;
         }
       });
+
+      const statusText =
+        STATUS_CODES.find((c) => c.code === code)?.name ??
+        (code === 304 ? "Not Modified" : "");
+
       setResult({
         status: res.status,
-        headers: headerLines.join("\n"),
+        statusText,
+        headers,
         body: JSON.stringify(body, null, 2),
+        responseTime: elapsed,
       });
     } catch {
       setResult({
         status: 0,
-        headers: "",
+        statusText: "Error",
+        headers: {},
         body: JSON.stringify(
           { error: "Failed to connect to the API endpoint." },
           null,
           2,
         ),
+        responseTime: Math.round(performance.now() - start),
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const copyToClipboard = useCallback(async () => {
+    if (!currentTabContent) return;
+    await navigator.clipboard.writeText(currentTabContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [currentTabContent]);
+
+  const clearResponse = useCallback(() => {
+    setResult(null);
+    setActiveTab("body");
+  }, []);
 
   return (
-    <div className="w-full flex  flex-col lg:flex-row gap-6  bg-background p-6 rounded-2xl border border-border shadow-2xl relative overflow-hidden">
-      {/* Control Panel */}
-      <div className="w-full lg:w-[30%]  justify-around flex flex-col gap-4 z-10">
-        <div>
-          <h3 className="text-lg font-bold text-foreground mb-1">
-            <Hash className="h-4 w-4 inline mr-1.5 text-primary" />
-            HTTP Status Code Playground
-          </h3>
+    <div className="w-full flex flex-col lg:flex-row gap-0 bg-background rounded-2xl border border-border shadow-2xl overflow-hidden">
+      {/* Left Panel - API Client */}
+      <div className="w-full lg:w-[30%] flex flex-col border-b lg:border-b-0 lg:border-r border-border">
+        <TerminalHeader
+          title="API Client"
+          extra={
+            <span className="text-[10px] font-mono text-primary font-bold">
+              GET
+            </span>
+          }
+        />
+
+        {/* URL Bar */}
+        <div className="px-4 py-3 border-b border-border bg-muted/30">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background border border-border font-mono text-xs">
+            <span className="text-green-400 font-bold">GET</span>
+            <span className="text-muted-foreground">/api/status-codes/</span>
+            <span className="text-primary font-bold">{selected}</span>
+          </div>
         </div>
 
-        <div className="flex flex-col  gap-2">
-          {CATEGORIES.map((cat) => {
-            const codes = STATUS_CODES.filter((c) => c.category === cat);
-            if (!codes.length) return null;
-            return (
-              <div key={cat}>
-                <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider p-2 block">
-                  {cat}
-                </span>
-                <div className="flex flex-wrap gap-1">
-                  {codes.map((sc) => (
-                    <button
-                      key={sc.code}
-                      onClick={() => callEndpoint(sc.code)}
-                      disabled={loading}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border transition-all ${
-                        selected === sc.code
-                          ? `bg-primary/10 border-primary/40 text-primary shadow-sm`
-                          : `${sc.color} bg-muted/20 hover:bg-muted/40`
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {sc.code}
-                    </button>
-                  ))}
-                </div>
+        {/* Status Code Grid */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {groupedCodes.map(({ category, codes }) => (
+            <div key={category}>
+              <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-1 pb-2 block">
+                {category}
+              </span>
+              <div className="flex flex-col gap-1.5">
+                {codes.map((sc) => (
+                  <StatusButton
+                    key={sc.code}
+                    code={sc.code}
+                    name={sc.name}
+                    isSelected={selected === sc.code}
+                    disabled={loading}
+                    onClick={() => callEndpoint(sc.code)}
+                  />
+                ))}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
-
-        <button
-          onClick={() => callEndpoint(selected)}
-          disabled={loading}
-          className="w-full mt-2 py-2.5 rounded-xl bg-linear-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white text-xs font-semibold shadow-lg shadow-violet-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {loading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Send className="h-3.5 w-3.5" />
-          )}
-          {loading ? "Requesting..." : `Send GET /api/status-codes/${selected}`}
-        </button>
       </div>
 
-      {/* Response Viewer */}
-      <div className="w-full lg:w-[70%] flex flex-col gap-4 z-10">
-        {/* Status Code Badge */}
+      {/* Right Panel - Response */}
+      <div className="w-full lg:w-[70%] flex flex-col min-h-0">
+        <TerminalHeader
+          title="Response"
+          showDots={false}
+          extra={
+            result ? (
+              <span className="text-[10px] font-mono text-muted-foreground">
+                {result.responseTime} ms
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono text-muted-foreground">
+                0 ms
+              </span>
+            )
+          }
+        />
+
+        {/* Status Badge */}
         <AnimatePresence mode="wait">
           <motion.div
             key={result ? result.status : "empty"}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className={`flex items-center gap-4 px-5 py-4 rounded-xl border ${result ? statusBgClass(result.status) : "bg-muted/20 border-border"}`}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            className={`mx-4 mt-4 flex items-center gap-3 px-4 py-3 rounded-xl border ${
+              result
+                ? statusBadgeColor(result.status)
+                : "bg-muted/20 border-border"
+            }`}
           >
             {result ? (
               <>
                 <div
-                  className={`h-4 w-4 rounded-full ${statusColor(result.status)}`}
+                  className={`h-3 w-3 rounded-full ${statusDotColor(result.status)}`}
                 />
-                <span className="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight">
+                <span className="text-xl font-extrabold font-mono tracking-tight">
                   {result.status}
                 </span>
-                <span className="text-sm sm:text-base font-semibold opacity-80">
-                  {STATUS_CODES.find((c) => c.code === result.status)?.name ??
-                    (result.status === 304 ? "Not Modified" : "")}
+                <span className="text-sm font-semibold opacity-80">
+                  {result.statusText}
                 </span>
                 <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/60 font-mono">
-                  HTTP/{result.status >= 100 ? "1.1" : "?"}
+                  HTTP/1.1
                 </span>
               </>
             ) : (
-              <>
-                <Info className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Select a status code and click send to see the live response
-                </span>
-              </>
+              <span className="text-sm text-muted-foreground">
+                Click a status code to see the response
+              </span>
             )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Terminal-style Response */}
-        <div className="flex flex-col rounded-xl border border-border bg-background font-mono text-[11px] sm:text-xs text-foreground h-80 overflow-hidden">
-          <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border bg-muted/60 text-muted-foreground select-none shrink-0">
-            <Terminal className="h-3.5 w-3.5" />
-            <span>Response</span>
-            {result && (
-              <span className="ml-auto text-[10px] text-muted-foreground/60">
-                {result.headers.split("\n").length} header
-                {result.headers.split("\n").length !== 1 ? "s" : ""}
-              </span>
-            )}
+        {/* Tabs */}
+        {result && (
+          <div className="flex items-center gap-0 px-4 mt-4 border-b border-border">
+            {(["headers", "body", "raw"] as Tab[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 text-xs font-semibold capitalize transition-colors border-b-2 ${
+                  activeTab === tab
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+            <div className="ml-auto flex items-center gap-1 py-1">
+              <button
+                onClick={copyToClipboard}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title="Copy"
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5 text-green-400" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </button>
+              <button
+                onClick={clearResponse}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title="Clear"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4">
+        )}
+
+        {/* Response Body */}
+        <div
+          className="flex-1 overflow-y-auto p-4 min-h-0"
+          style={{ maxHeight: "24rem" }}
+        >
+          <div className="font-mono text-[11px] sm:text-xs leading-relaxed">
             {loading ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center h-32">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
             ) : result ? (
-              <div className="space-y-3">
-                {result.headers && (
-                  <div>
-                    <span className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
-                      Response Headers
-                    </span>
-                    <pre className="mt-1 text-muted-foreground/80 whitespace-pre-wrap">
-                      {result.headers}
-                    </pre>
-                  </div>
-                )}
-                <div>
-                  <span className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
-                    Body
-                  </span>
-                  <pre className="mt-1 text-foreground whitespace-pre-wrap overflow-x-auto">
-                    {result.body}
-                  </pre>
-                </div>
-              </div>
+              <pre className="whitespace-pre-wrap wrap-break-word text-foreground/90">
+                {currentTabContent}
+              </pre>
             ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground italic">
-                Waiting for request...
+              <div className="flex flex-col items-center justify-center h-32 text-muted-foreground gap-2">
+                <Hash className="h-8 w-8 opacity-20" />
+                <span className="italic text-xs">Waiting for request...</span>
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { Search, ArrowUp, ArrowDown, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -110,16 +110,90 @@ const latencyColors: Record<string, string> = {
   High: "text-orange-500",
 };
 
-function SortIcon({ column, sortColumn, sortDirection: _sortDirection }: { column: string; sortColumn: string | null; sortDirection: "asc" | "desc" }) {
+const SortIcon = memo(function SortIcon({ column, sortColumn, sortDirection }: { column: string; sortColumn: string | null; sortDirection: "asc" | "desc" }) {
   if (sortColumn !== column) {
     return <ArrowUp className="h-3 w-3 inline ml-1.5 text-muted-foreground" />;
   }
-  return _sortDirection === "asc" ? (
+  return sortDirection === "asc" ? (
     <ArrowUp className="h-3 w-3 inline ml-1.5 text-primary" />
   ) : (
     <ArrowDown className="h-3 w-3 inline ml-1.5 text-primary" />
   );
-}
+});
+
+const categoryDotColor: Record<string, string> = {
+  "Request-Response": "bg-green-accent",
+  "Real-time & Bidirectional": "bg-secondary",
+  "Push / Event-Driven": "bg-orange-accent",
+  "RPC": "bg-primary",
+  "AI Context": "bg-pink-accent",
+};
+
+const categoryBadgeStyle: Record<string, string> = {
+  "Request-Response": "bg-green-accent/10 text-green-accent border-green-accent/20",
+  "Real-time & Bidirectional": "bg-secondary/10 text-secondary border-secondary/20",
+  "Push / Event-Driven": "bg-orange-accent/10 text-orange-accent border-orange-accent/20",
+  "RPC": "bg-primary/10 text-primary border-primary/20",
+  "AI Context": "bg-pink-accent/10 text-pink-accent border-pink-accent/20",
+};
+
+const ProtocolRow = memo(function ProtocolRow({ protocol: p }: { protocol: ProtocolDetail }) {
+  return (
+    <TableRow className="border-border hover:bg-muted/30 transition-colors">
+      <TableCell className="font-medium text-foreground">
+        <span className="flex items-center gap-2.5">
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full shrink-0",
+              categoryDotColor[p.category],
+            )}
+          />
+          {p.name}
+        </span>
+      </TableCell>
+      <TableCell>
+        <span
+          className={cn(
+            "inline-block px-2 py-0.5 rounded-md text-xs font-medium border",
+            categoryBadgeStyle[p.category],
+          )}
+        >
+          {p.category}
+        </span>
+      </TableCell>
+      <TableCell className="text-muted-foreground font-mono text-sm">
+        {p.transport}
+      </TableCell>
+      <TableCell className="text-muted-foreground text-sm">
+        {p.serialization}
+      </TableCell>
+      <TableCell className="text-center">
+        {p.bidirectional ? (
+          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-secondary/10 border border-secondary/25">
+            <Check className="h-3.5 w-3.5 text-secondary" />
+          </span>
+        ) : (
+          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted border border-border">
+            <X className="h-3.5 w-3.5 text-muted-foreground" />
+          </span>
+        )}
+      </TableCell>
+      <TableCell>
+        <span
+          className={cn(
+            "text-sm font-semibold",
+            latencyColors[p.latency],
+          )}
+        >
+          {p.latency}
+        </span>
+      </TableCell>
+      <TableCell className="text-muted-foreground text-sm max-w-65">
+        <span className="line-clamp-2">{p.useCase}</span>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 export default function ComparisonTable() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -195,7 +269,7 @@ export default function ComparisonTable() {
   return (
     <div className="w-full flex flex-col gap-6">
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-muted/40 p-4 rounded-xl border border-border backdrop-blur-sm">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-muted/40 p-4 rounded-xl border border-border">
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4.5 w-4.5" />
           <input
@@ -226,7 +300,7 @@ export default function ComparisonTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-background/30 backdrop-blur-md overflow-hidden">
+      <div className="rounded-xl border border-border bg-background/30 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
@@ -277,77 +351,7 @@ export default function ComparisonTable() {
           <TableBody>
             {sortedProtocols.length > 0 ? (
               sortedProtocols.map((p) => (
-                <TableRow
-                  key={p.name}
-                  className="border-border hover:bg-muted/30 transition-colors"
-                >
-                  <TableCell className="font-medium text-foreground">
-                    <span className="flex items-center gap-2.5">
-                      <span
-                        className={cn(
-                          "h-2 w-2 rounded-full shrink-0",
-                          p.category === "Request-Response" && "bg-green-accent",
-                          p.category === "Real-time & Bidirectional" &&
-                            "bg-secondary",
-                          p.category === "Push / Event-Driven" &&
-                            "bg-orange-accent",
-                          p.category === "RPC" && "bg-primary",
-                          p.category === "AI Context" && "bg-pink-accent",
-                        )}
-                      />
-                      {p.name}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "inline-block px-2 py-0.5 rounded-md text-xs font-medium border",
-                        p.category === "Request-Response" &&
-                          "bg-green-accent/10 text-green-accent border-green-accent/20",
-                        p.category === "Real-time & Bidirectional" &&
-                          "bg-secondary/10 text-secondary border-secondary/20",
-                        p.category === "Push / Event-Driven" &&
-                          "bg-orange-accent/10 text-orange-accent border-orange-accent/20",
-                        p.category === "RPC" &&
-                          "bg-primary/10 text-primary border-primary/20",
-                        p.category === "AI Context" &&
-                          "bg-pink-accent/10 text-pink-accent border-pink-accent/20",
-                      )}
-                    >
-                      {p.category}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-sm">
-                    {p.transport}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {p.serialization}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {p.bidirectional ? (
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-secondary/10 border border-secondary/25">
-                        <Check className="h-3.5 w-3.5 text-secondary" />
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted border border-border">
-                        <X className="h-3.5 w-3.5 text-muted-foreground" />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "text-sm font-semibold",
-                        latencyColors[p.latency],
-                      )}
-                    >
-                      {p.latency}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm max-w-65">
-                    <span className="line-clamp-2">{p.useCase}</span>
-                  </TableCell>
-                </TableRow>
+                <ProtocolRow key={p.name} protocol={p} />
               ))
             ) : (
               <TableRow>

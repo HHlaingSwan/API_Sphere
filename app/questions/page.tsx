@@ -35,7 +35,7 @@ export default function QuestionsPage() {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight"
         >
-          <span className="bg-gradient-to-r from-violet-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-violet-400 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
             You have questions?
           </span>
         </motion.h1>
@@ -45,7 +45,7 @@ export default function QuestionsPage() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-          className="w-full max-w-[350px] sm:max-w-[450px]"
+          className="w-full max-w-87.5 sm:max-w-112.5"
         >
           <div
             className="tenor-gif-embed"

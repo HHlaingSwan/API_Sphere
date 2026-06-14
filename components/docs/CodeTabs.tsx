@@ -5,17 +5,19 @@ import { Check, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeSnippet } from "@/data/protocolDocs";
 
-const tabs = ["curl", "javascript", "python", "go"] as const;
+const tabs = ["curl", "javascript", "python", "go", "csharp", "java"] as const;
 
 const tabLabels: Record<string, string> = {
   curl: "curl",
   javascript: "JS",
   python: "Python",
   go: "Go",
+  csharp: "C#",
+  java: "Java",
 };
 
 export default function CodeTabs({ snippets }: { snippets: CodeSnippet }) {
-  const [activeTab, setActiveTab] = useState<"curl" | "javascript" | "python" | "go">("curl");
+  const [activeTab, setActiveTab] = useState<"curl" | "javascript" | "python" | "go" | "csharp" | "java">("curl");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
