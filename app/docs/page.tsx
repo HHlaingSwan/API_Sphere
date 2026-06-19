@@ -15,6 +15,15 @@ import Navbar from "@/components/Navbar";
 
 const protocols = [
   {
+    name: "SOAP",
+    slug: "soap",
+    description:
+      "Enterprise XML messaging with strict WSDL contracts, WS-Security, and transactions.",
+    color:
+      "from-yellow-500/20 to-amber-500/10 text-yellow-400 border-yellow-500/20",
+    icon: FileText,
+  },
+  {
     name: "REST",
     slug: "rest",
     description:
@@ -22,6 +31,15 @@ const protocols = [
     color:
       "from-green-500/20 to-emerald-500/10 text-green-400 border-green-500/20",
     icon: Code,
+  },
+  {
+    name: "gRPC",
+    slug: "grpc",
+    description:
+      "High-performance RPC with Protobuf serialization. Powers Google's internal services.",
+    color:
+      "from-violet-500/20 to-indigo-500/10 text-violet-400 border-violet-500/20",
+    icon: Terminal,
   },
   {
     name: "GraphQL",
@@ -49,13 +67,13 @@ const protocols = [
     icon: Radio,
   },
   {
-    name: "gRPC",
-    slug: "grpc",
+    name: "WebRTC",
+    slug: "webrtc",
     description:
-      "High-performance RPC with Protobuf serialization. Powers Google's internal services.",
+      "Peer-to-peer audio, video, and data with sub-500ms latency — no plugins needed.",
     color:
-      "from-violet-500/20 to-indigo-500/10 text-violet-400 border-violet-500/20",
-    icon: Terminal,
+      "from-teal-500/20 to-emerald-500/10 text-teal-400 border-teal-500/20",
+    icon: Video,
   },
   {
     name: "MCP",
@@ -65,24 +83,6 @@ const protocols = [
     color:
       "from-fuchsia-500/20 to-purple-500/10 text-fuchsia-400 border-fuchsia-500/20",
     icon: Cpu,
-  },
-  {
-    name: "SOAP",
-    slug: "soap",
-    description:
-      "Enterprise XML messaging with strict WSDL contracts, WS-Security, and transactions.",
-    color:
-      "from-yellow-500/20 to-amber-500/10 text-yellow-400 border-yellow-500/20",
-    icon: FileText,
-  },
-  {
-    name: "WebRTC",
-    slug: "webrtc",
-    description:
-      "Peer-to-peer audio, video, and data with sub-500ms latency — no plugins needed.",
-    color:
-      "from-teal-500/20 to-emerald-500/10 text-teal-400 border-teal-500/20",
-    icon: Video,
   },
 ];
 
